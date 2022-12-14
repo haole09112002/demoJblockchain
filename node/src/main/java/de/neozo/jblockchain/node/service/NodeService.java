@@ -61,6 +61,7 @@ public class NodeService implements ApplicationListener<ServletWebServerInitiali
 
         // download data if necessary
         if (self.equals(masterNode)) {
+        	blockService.loadLocalBlockDB();
             LOG.info("Running as master node, nothing to init");
         } else {
             knownNodes.add(masterNode);
@@ -68,7 +69,29 @@ public class NodeService implements ApplicationListener<ServletWebServerInitiali
             // retrieve data
             retrieveKnownNodes(masterNode, restTemplate);
             addressService.retrieveAddresses(masterNode, restTemplate);
-            blockService.retrieveBlockchain(masterNode, restTemplate);
+            blockService.loadLocalBlockDB();
+            if(blockService.getLastBlock() == null) {
+            	 blockService.retrieveBlockchain(masterNode, restTemplate);
+            }
+            else {
+            	int bestVersionBlock = blockService.getLastBlock().getIndex();
+            	Node bestVersionNode = null;
+            	for (Node node : knownNodes) {
+            		int newVersion = blockService.getVersionBlock(node, restTemplate);
+					if(bestVersionBlock >= newVersion ) {
+						continue;
+					}
+					bestVersionBlock = newVersion;
+					bestVersionNode = node;
+				}
+            	try {
+            		if(bestVersionNode != null) {
+            			blockService.addMissingBlocks(bestVersionNode, restTemplate);
+            		}
+				} catch (Exception e) {
+					System.err.println(e);
+				}
+            }
             transactionService.retrieveTransactions(masterNode, restTemplate);
 
             // publish self
@@ -107,7 +130,7 @@ public class NodeService implements ApplicationListener<ServletWebServerInitiali
     public void broadcastPut(String endpoint, Object data) {
         knownNodes.parallelStream().forEach(node -> restTemplate.put(node.getAddress() + "/" + endpoint, data));
     }
-
+    
     /**
      * Invoke a POST request on all other Nodes
      * @param endpoint the endpoint for this request

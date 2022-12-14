@@ -18,5 +18,6 @@ public abstract class Config {
      */
     public static final int MAX_TRANSACTIONS_PER_BLOCK = 5;
 
-    
+    public static final int NEW_BLOCK = 1;
+    public static final int OLD_BLOCK = 2;
 }

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<!-- <table border="1" id = "tableAddress">
+    <caption>Danh sach list dang ket noi</caption>
+    <th>Hash code Address</th>
+    <th>Name</th>
+    <th>PublicKey</th>
+    
+       
+    
+</table> -->
+<!-- <button>Refresh</button> -->
+
+
+<h1>Create Transaction</h1>
+<!-- <label>Private Key</label>    <input type="text" value=""> <br> -->
+<label>Sender Hash</label>    <input type="text" name="sender" value=" "> <br>
+<label>Receiver</label>    <input type="text" name="receiver" value=" "> <br>
+<label>Message</label>    <input type="text" name="message"><br>
+<label>Private Key</label>    <input type="text" name="privateKey"><br>
+<!-- <label>seftNode</label>    <input type="text" name="selfNode"><br> -->
+<button  id="create">Create</button>
+
+
+
+<table border="1" id = "transactionPool">
+    <caption>Transaction pool</caption>
+    <th>Sender hash</th>
+    <th>Message</th>
+    <th>Signature</th>
+    <th>Time</th>
+</table>
+<script src="../../../resources/static/js/transaction.js"></script>
+</body>
+</html>

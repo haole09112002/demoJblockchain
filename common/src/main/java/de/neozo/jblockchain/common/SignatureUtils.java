@@ -62,16 +62,21 @@ public abstract class SignatureUtils {
      * @param privateKey to use for the signage process
      * @return signature of data which can be verified with corresponding public key
      */
-    public static byte[] sign(byte[] data, byte[] privateKey) throws Exception {
+    public static byte[] sign(byte[] data, byte[] privateKey) {
         // construct a PrivateKey-object from raw bytes
-        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKey);
-        PrivateKey privateKeyObj = keyFactory.generatePrivate(keySpec);
+    	try {
+    		PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKey);
+            PrivateKey privateKeyObj = keyFactory.generatePrivate(keySpec);
 
-        // do the signage
-        Signature sig = getSignatureObj();
-        sig.initSign(privateKeyObj);
-        sig.update(data);
-        return sig.sign();
+            // do the signage
+            Signature sig = getSignatureObj();
+            sig.initSign(privateKeyObj);
+            sig.update(data);
+            return sig.sign();
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+    	return null;       
     }
 
     private static Signature getSignatureObj() throws NoSuchProviderException, NoSuchAlgorithmException {
