@@ -1,3 +1,4 @@
+
 package de.neozo.jblockchain.node.service;
 
 
@@ -5,6 +6,8 @@ import de.neozo.jblockchain.common.SignatureUtils;
 import de.neozo.jblockchain.common.domain.Address;
 import de.neozo.jblockchain.common.domain.Node;
 import de.neozo.jblockchain.common.domain.Transaction;
+import de.neozo.jblockchain.node.Config;
+
 import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +24,6 @@ public class TransactionService {
     private final static Logger LOG = LoggerFactory.getLogger(TransactionService.class);
 
     private final AddressService addressService;
-
 
     /**
      * Pool of Transactions which are not included in a Block yet.
@@ -77,7 +79,7 @@ public class TransactionService {
         }
 
         try {
-            if (!SignatureUtils.verify(transaction.getSignableData(), transaction.getSignature().getBytes(), sender.getPublicKey().getBytes())) {
+            if (!SignatureUtils.verify(transaction.getText().getBytes(), transaction.getSignature(), sender.getPublicKey())) {
                 LOG.warn("Invalid signature");
                 return false;
             }
@@ -87,7 +89,7 @@ public class TransactionService {
         }
 
         // correct hash
-        if (!transaction.getHash().equals(new String(transaction.calculateHash()))) {
+        if (!Arrays.equals(transaction.getHash(), transaction.calculateHash())) {
             LOG.warn("Invalid hash");
             return false;
         }

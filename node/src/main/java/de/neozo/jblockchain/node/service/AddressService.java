@@ -37,8 +37,8 @@ public class AddressService {
      * @param hash hash of Address
      * @return Matching Address for hash
      */
-    public Address getByHash(String hash) {
-        return addresses.get(hash);
+    public Address getByHash(byte[] hash) {
+        return addresses.get(Base64.encodeBase64String(hash));
     }
 
     /**
@@ -54,7 +54,7 @@ public class AddressService {
      * @param address Address to add
      */
     public synchronized void add(Address address) {
-        addresses.put(address.getHash(), address);
+        addresses.put(Base64.encodeBase64String(address.getHash()), address);
     }
 
     /**
@@ -68,20 +68,17 @@ public class AddressService {
         LOG.info("Retrieved " + addresses.length + " addresses from node " + node.getAddress());
     }
     
-    public  KeyPair generateKeyPair() {
-    	KeyPair keyPair;
-		try {
-			keyPair = SignatureUtils.generateKeyPair();
-			return keyPair;
-		} catch (NoSuchProviderException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
+    public KeyPair generateKeyPair() {
+    	try {
+    	       KeyPair keyPair = SignatureUtils.generateKeyPair();
+    	       Files.write(Paths.get("key.priv"), keyPair.getPrivate().getEncoded());
+    	       Files.write(Paths.get("key.pub"), keyPair.getPublic().getEncoded());
+    	       return keyPair;
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return null;
-    	
+    	return null;
+ 
     }
     
     

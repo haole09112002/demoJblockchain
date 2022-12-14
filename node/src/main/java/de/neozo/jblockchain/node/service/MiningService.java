@@ -4,11 +4,14 @@ package de.neozo.jblockchain.node.service;
 import de.neozo.jblockchain.common.domain.Block;
 import de.neozo.jblockchain.common.domain.Transaction;
 import de.neozo.jblockchain.node.Config;
+
+import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.net.MalformedURLException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -21,17 +24,16 @@ public class MiningService implements Runnable {
     private final TransactionService transactionService;
     private final NodeService nodeService;
     private final BlockService blockService;
-
+    
     private AtomicBoolean runMiner = new AtomicBoolean(false);
 
 
     @Autowired
-    public MiningService(TransactionService transactionService, NodeService nodeService, BlockService blockService) {
+    public MiningService(TransactionService transactionService,NodeService nodeService,  BlockService blockService) {
         this.transactionService = transactionService;
         this.nodeService = nodeService;
         this.blockService = blockService;
     }
-
     /**
      * Start the miner
      */
@@ -61,8 +63,19 @@ public class MiningService implements Runnable {
             if (block != null) {
                 // Found block! Append and publish
                 LOG.info("Mined block with " + block.getTransactions().size() + " transactions and nonce " + block.getTries());
-                blockService.append(block);
-                nodeService.broadcastPut("block", block);
+                try {
+                	boolean success = blockService.append(block,Config.NEW_BLOCK);
+                	if(success) {
+                		LOG.info("Added block "+Base64.encodeBase64String(block.getHash()) );
+                		nodeService.broadcastPut("block", block);
+                		break;
+                	}
+                	else {
+                		LOG.info("Can't add block "+Base64.encodeBase64String(block.getHash()) );
+					}
+				} catch (MalformedURLException e) {
+					LOG.info("ERORR: Block can't add to Couchdb");
+				}
             }
         }
         LOG.info("Miner stopped");
@@ -72,7 +85,8 @@ public class MiningService implements Runnable {
         long tries = 0;
 
         // get previous hash and transactions
-        byte[] previousBlockHash = blockService.getLastBlock() != null ? blockService.getLastBlock().getHash().getBytes() : null;
+        byte[] previousBlockHash = blockService.getLastBlock() != null ? blockService.getLastBlock().getHash() : null;
+        int previousBlockIndex = blockService.getLastBlock() != null ? blockService.getLastBlock().getIndex() : -1;
         List<Transaction> transactions = transactionService.getTransactionPool()
                 .stream().limit(Config.MAX_TRANSACTIONS_PER_BLOCK).collect(Collectors.toList());
 
@@ -89,7 +103,7 @@ public class MiningService implements Runnable {
 
         // try new block until difficulty is sufficient
         while (runMiner.get()) {
-            Block block = new Block(new String(previousBlockHash), transactions, tries);
+            Block block = new Block(previousBlockIndex,previousBlockHash, transactions, tries);
             if (block.getLeadingZerosCount() >= Config.DIFFICULTY) {
                 return block;
             }

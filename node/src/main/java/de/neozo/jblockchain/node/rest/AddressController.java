@@ -2,7 +2,9 @@ package de.neozo.jblockchain.node.rest;
 
 
 import de.neozo.jblockchain.common.domain.Address;
+
 import de.neozo.jblockchain.common.domain.Peer;
+import de.neozo.jblockchain.node.dto.AddressDTO;
 import de.neozo.jblockchain.node.service.AddressService;
 import de.neozo.jblockchain.node.service.NodeService;
 import org.apache.commons.codec.binary.Base64;
@@ -10,13 +12,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
 import javax.servlet.http.HttpServletResponse;
 
-import java.io.IOException;
 import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.util.Collection;
 
 
@@ -51,64 +49,63 @@ public class AddressController {
      * @param publish if true, this Node is going to inform all other Nodes about the new Address
      * @param response Status Code 202 if Address was added, 406 if submitted hash is already present
      */
-    @PostMapping(value = "/add",consumes = "application/x-www-form-urlencoded")
-    void addAddress( Peer peer, @RequestParam(required = false) Boolean publish, HttpServletResponse response) {
-    	Address address = new Address(peer.getName(),peer.getPublicKey());
-        LOG.info("Add address " + address.getHash());
-        if (addressService.getByHash(address.getHash()) == null) {
-            addressService.add(address);
-
-            if (publish != null && publish) {
-                nodeService.broadcastPut("address", address);
-            }
-            response.setStatus(HttpServletResponse.SC_ACCEPTED);
-        } else {
-            response.setStatus(HttpServletResponse.SC_NOT_ACCEPTABLE);
-        }
-    }
-    
-    
-    
-    @PostMapping(value = "/add",   consumes = "application/json")
-    void addAddress1(@RequestBody Peer peer, @RequestParam(required = false) Boolean publish, HttpServletResponse response) {
-    	Address address = new Address(peer.getName(),peer.getPublicKey());
-        LOG.info("Add address " + address.getHash());
-        if (addressService.getByHash(address.getHash()) == null) {
-            addressService.add(address);
-
-            if (publish != null && publish) {
-                nodeService.broadcastPut("address", address);
-            }
-            response.setStatus(HttpServletResponse.SC_ACCEPTED);
-        } else {
-            response.setStatus(HttpServletResponse.SC_NOT_ACCEPTABLE);
-        }
-    }
-//    @RequestMapping(method =  RequestMethod.PUT)
-//    void addAddresss(@RequestBody Peer peer,@RequestBody String name) {
-////      
-//    	boolean publish = true;
-//    	Address address = new Address(name, publicKey);
-//    	 LOG.info("Add address " + address.getHash());
+//    @PostMapping(value = "/add",consumes = "application/x-www-form-urlencoded")
+//    void addAddress( Peer peer, @RequestParam(required = false) Boolean publish, HttpServletResponse response) {
+//    	Address address = new Address(peer.getName(),peer.getPublicKey());
+//        LOG.info("Add address " + address.getHash());
 //        if (addressService.getByHash(address.getHash()) == null) {
 //            addressService.add(address);
 //
-//            if ( publish) {
+//            if (publish != null && publish) {
 //                nodeService.broadcastPut("address", address);
 //            }
-////            response.setStatus(HttpServletResponse.SC_ACCEPTED);
+//            response.setStatus(HttpServletResponse.SC_ACCEPTED);
 //        } else {
-////            response.setStatus(HttpServletResponse.SC_NOT_ACCEPTABLE);
+//            response.setStatus(HttpServletResponse.SC_NOT_ACCEPTABLE);
 //        }
 //    }
     
-//    @RequestMapping(value = "generate", method = RequestMethod.GET)
-//    KeyPair generateKeyPair( @RequestParam(required = false) String name, HttpServletResponse response)  {
-//    	
-//			KeyPair keyPair = addressService.generateKeyPair();
-//			return keyPair;
-//	
-//  }
     
+    
+    @PutMapping(consumes = "application/json")
+    AddressDTO  addAddress(@RequestBody String name, @RequestParam(required = false) Boolean publish, HttpServletResponse response) {
+    	KeyPair keyPair = addressService.generateKeyPair();
+    	if(keyPair != null)
+    	{
+    		Address address = new Address(name, keyPair.getPublic().getEncoded());
+        	LOG.info("Add address " + Base64.encodeBase64String(address.getHash()));
+        	if (addressService.getByHash(address.getHash()) == null) {
+                addressService.add(address);
 
+                if (publish != null && publish) {
+                    nodeService.broadcastPut("address/add", address);
+                }
+                response.setStatus(HttpServletResponse.SC_ACCEPTED);
+                AddressDTO addressDTO = new AddressDTO(address.getHash(), address.getName(), address.getPublicKey(), keyPair.getPrivate().getEncoded());
+                return addressDTO;
+            } else {
+                response.setStatus(HttpServletResponse.SC_NOT_ACCEPTABLE);
+                return null;
+            }
+    	}
+    	return null;
+    }
+    
+    @PutMapping( value = "add", consumes = "application/json")
+    void  addAddress(@RequestBody Address address, @RequestParam(required = false) Boolean publish, HttpServletResponse response) {
+
+    		
+        	LOG.info("Add address " + Base64.encodeBase64String(address.getHash()));
+        	if (addressService.getByHash(address.getHash()) == null) {
+                addressService.add(address);
+
+                if (publish != null && publish) {
+                    nodeService.broadcastPut("address/add", address);
+                }
+                response.setStatus(HttpServletResponse.SC_ACCEPTED);
+            } else {
+                response.setStatus(HttpServletResponse.SC_NOT_ACCEPTABLE);
+    	}
+
+    }
 }

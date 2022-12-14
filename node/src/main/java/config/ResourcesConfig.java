@@ -1,10 +1,12 @@
 package config;
 
 import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-@CacheConfig
+@Configuration
 @EnableWebMvc
 public class ResourcesConfig implements WebMvcConfigurer {
 
@@ -21,5 +23,11 @@ public class ResourcesConfig implements WebMvcConfigurer {
         .addResourceHandler("/js/**") // « /static/css/myStatic.css
         .addResourceLocations("classpath:/static/js/"); // Default Static Loaction
 	}
+	
+//	@Override
+//	public void addCorsMappings(CorsRegistry registry) {
+//		// TODO Auto-generated method stub
+//		registry.addMapping("/**").allowedOrigins("http://127.0.0.1:5500");
+//	}
 
 }
