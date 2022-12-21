@@ -66,5 +66,4 @@ public class NodeController {
     String getIp(HttpServletRequest request) {
         return request.getRemoteAddr();
     }
-
 }
