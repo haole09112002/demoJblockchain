@@ -1,23 +1,31 @@
-
 package de.neozo.jblockchain.node.service;
 
 
 import de.neozo.jblockchain.common.domain.Block;
 import de.neozo.jblockchain.common.domain.Node;
+import de.neozo.jblockchain.common.domain.Transaction;
+import de.neozo.jblockchain.common.domain.TransactionInput;
+import de.neozo.jblockchain.common.domain.TransactionOutput;
 import de.neozo.jblockchain.node.Config;
 import de.neozo.jblockchain.common.repository.*;
 
+import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -97,7 +105,81 @@ public class BlockService {
 			System.out.println("ERROR: Can't load blockchain from CouchDB!");
 		}
     }
+    public void createGenesisBlock() {
+    	try {
+			transactionService.createCoinBase();
+			long tries = 0;
+	        List<Transaction> transactions = transactionService.getTransactionPool()
+	                .stream().limit(Config.MAX_TRANSACTIONS_PER_BLOCK).collect(Collectors.toList());
+	        if (transactions.isEmpty()) {
+	            LOG.info("No transactions available, pausing");
+	            try {
+	                Thread.sleep(10000);
+	            } catch (InterruptedException e) {
+	                LOG.error("Thread interrupted", e);
+	            }
+	           
+	        }
+	        while(true) {
+	        	Block block = new Block(-1,null, transactions, tries);
+	            if (block.getLeadingZerosCount() >= Config.DIFFICULTY) {
+	                append(block,Config.NEW_BLOCK);
+	                return;
+	            }
+	            tries++;
+	        }
 
+		} catch (NoSuchProviderException | NoSuchAlgorithmException | IOException e) {
+			e.printStackTrace();
+		}
+    	
+    }
+    public List<TransactionOutput>  findAllUTXOs(){
+		List<TransactionOutput> allUTXOs = new ArrayList<>();
+		List<String> allSpentTXOs = this.getAllSpentTXOs();
+		for (Block block : blockchain) {
+			for (Transaction tx : block.getTransactions()) {
+				for (TransactionOutput txOutput : tx.getTxOutputs()) {
+					if(allSpentTXOs.contains(txOutput.getId())) {
+						continue;
+					}
+					allUTXOs.add(txOutput);
+				}
+			}
+		}
+		List<Transaction> transactions = transactionService.getTransactionPool()
+                .stream().collect(Collectors.toList());
+		for (Transaction transaction : transactions) {
+			for (TransactionOutput txOutput : transaction.getTxOutputs()) {
+				if(allSpentTXOs.contains(txOutput.getId())) {
+					continue;
+				}
+				allUTXOs.add(txOutput);
+			}
+		}
+		return allUTXOs;
+	}
+    private List<String> getAllSpentTXOs(){
+		List<String> spentTXOs = new ArrayList<>();
+		for (Block block : blockchain) {
+			for (Transaction tx : block.getTransactions()) {
+				if(tx.CheckCoinBase()) {
+					continue;
+				}
+				for (TransactionInput txInput : tx.getTxInputs()) {
+					spentTXOs.add(txInput.getTransactionOutputId());
+				}
+			}
+		}
+		List<Transaction> transactions = transactionService.getTransactionPool()
+                .stream().collect(Collectors.toList());
+		for (Transaction transaction : transactions) {
+			for (TransactionInput txInput : transaction.getTxInputs()) {
+				spentTXOs.add(txInput.getTransactionOutputId());
+			}
+		}
+		return spentTXOs;
+	}
     private boolean verify(Block block,int typeBlock) {
         // references last block in chain
         if (blockchain.size() > 0) {

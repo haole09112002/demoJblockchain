@@ -33,7 +33,6 @@ public class Block {
      * Hash of all Transaction hashes, calculated in a tree-like manner
      */
     private byte[] merkleRoot;
-
     /**
      * Self-chosen number to manipulate the Block hash
      */
@@ -130,7 +129,7 @@ public class Block {
      * @return SHA256-hash as raw bytes
      */
     public byte[] calculateMerkleRoot() {
-        Queue<byte[]> hashQueue = new LinkedList<>(transactions.stream().map(Transaction::getHash).collect(Collectors.toList()));
+        Queue<byte[]> hashQueue = new LinkedList<>(transactions.stream().map(Transaction::getHashID).collect(Collectors.toList()));
         while (hashQueue.size() > 1) {
             // take 2 hashes from queue
             byte[] hashableData = ArrayUtils.addAll(hashQueue.poll(), hashQueue.poll());
@@ -147,7 +146,7 @@ public class Block {
     public int getLeadingZerosCount() {
         for (int i = 0; i < getHash().length; i++) {
             if (getHash()[i] != 0) {
-                return i;
+                return i +1;
             }
         }
         return getHash().length;
