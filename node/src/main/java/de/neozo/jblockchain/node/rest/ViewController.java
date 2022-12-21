@@ -26,10 +26,10 @@ public class ViewController {
 	@RequestMapping(method = RequestMethod.POST)
 	public boolean checkLogin(@RequestBody TransactionDTO tx)
 	{
-		byte[] signature = SignatureUtils.sign(tx.getMessage().getBytes(), tx.getPrivateKey());
-        Transaction transaction = new Transaction(tx.getMessage(), tx.getSenderHash(), signature);
-         return transactionService.verify(transaction);
-        
+//		byte[] signature = SignatureUtils.sign(tx.getMessage().getBytes(), tx.getPrivateKey());
+//        Transaction transaction = new Transaction(tx.getMessage(), tx.getSenderHash(), signature);
+//         return transactionService.verify(transaction);
+        return true;
 		
 	}
 	
