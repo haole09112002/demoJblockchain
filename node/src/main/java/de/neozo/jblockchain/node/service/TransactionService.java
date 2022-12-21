@@ -70,7 +70,7 @@ public class TransactionService {
         return transactionPool.containsAll(transactions);
     }
 
-    private boolean verify(Transaction transaction) {
+    public boolean verify(Transaction transaction) {
         // correct signature
         Address sender = addressService.getByHash(transaction.getSenderHash());
         if (sender == null) {
