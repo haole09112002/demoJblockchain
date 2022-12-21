@@ -2,31 +2,41 @@ package de.neozo.jblockchain.node.dto;
 
 public class TransactionDTO {
 
-    private String message;
+    private float value;
 
 
     private byte[] senderHash;
 
-
+    private byte[] receiverHash;
     private byte[] privateKey;
 
     public TransactionDTO() {
 		// TODO Auto-generated constructor stub
 	}
 
-	public TransactionDTO(String text, byte[] senderHash, byte[] privateKey) {
-		this.message = text;
+	public TransactionDTO(float value, byte[] senderHash,byte[] receiverHash, byte[] privateKey) {
+		this.receiverHash = receiverHash;
 		this.senderHash = senderHash;
 		this.privateKey = privateKey;
 
 	}
 
-	public String getMessage() {
-		return message;
+
+
+	public float getValue() {
+		return value;
 	}
 
-	public void setMessage(String message) {
-		this.message = message;
+	public void setValue(float value) {
+		this.value = value;
+	}
+
+	public byte[] getReceiverHash() {
+		return receiverHash;
+	}
+
+	public void setReceiverHash(byte[] receiverHash) {
+		this.receiverHash = receiverHash;
 	}
 
 	public byte[] getSenderHash() {

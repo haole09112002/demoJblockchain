@@ -1,7 +1,10 @@
 package de.neozo.jblockchain.common.repository;
+
+
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -12,11 +15,12 @@ import org.ektorp.http.HttpClient;
 import org.ektorp.http.StdHttpClient;
 import org.ektorp.impl.StdCouchDbInstance;
 
-
-
+import de.neozo.jblockchain.common.domain.Address;
 import de.neozo.jblockchain.common.domain.Block;
 
 import de.neozo.jblockchain.common.domain.Transaction;
+import de.neozo.jblockchain.common.domain.TransactionInput;
+import de.neozo.jblockchain.common.domain.TransactionOutput;
 
 public class JavaCouchDB {
 	private static CouchDbConnector db;
@@ -37,7 +41,7 @@ public class JavaCouchDB {
 	}
 	private void initConnect() throws MalformedURLException {
 		 HttpClient httpClient = new StdHttpClient.Builder()  
-				.url("http://localhost:5984").username("hao").password("123456").build();
+				.url("http://localhost:5984").username("Admin").password("13122002a").build();
 		 CouchDbInstance dbInstance = new StdCouchDbInstance(httpClient); 
 		 db = dbInstance.createConnector("Block",true);
 	}
@@ -64,21 +68,49 @@ public class JavaCouchDB {
 		block.setHash(Base64.decodeBase64((String) map.get("hash")));
 		block.setPreviousBlockHash(Base64.decodeBase64((String) map.get("previousBlockHash")));
 		List<Map<String,Object>> mapTransactions = (List<Map<String,Object>>) map.get("transactions");
-		List<Transaction> transactions = new ArrayList<>();
-		for(Map<String,Object> map2 : mapTransactions) {
-			Transaction tempTransaction = new Transaction();
-			tempTransaction.setHash(Base64.decodeBase64((String) map2.get("hash")));
-			tempTransaction.setSenderHash(Base64.decodeBase64((String) map2.get("senderHash")));
-			tempTransaction.setSignature(Base64.decodeBase64((String) map2.get("signature")));
-			tempTransaction.setText((String) map2.get("text"));
-			tempTransaction.setTimestamp((long) map2.get("timestamp"));
-			transactions.add(tempTransaction);
-		}
-		block.setTransactions(transactions);
+		block.setTransactions(getTransactions(mapTransactions));
 		block.setMerkleRoot(Base64.decodeBase64((String) map.get("merkleRoot")));
 		block.setTries(Integer.toUnsignedLong((int)map.get("tries")));
 		block.setTimestamp((long)map.get("timestamp"));
 		return block;
+	}
+	public List<Transaction> getTransactions(List<Map<String,Object>> mapTransactions){
+		List<Transaction> transactions = new ArrayList<>();
+		for (Map<String, Object> map : mapTransactions) {
+			Transaction tempTransaction = new Transaction() ;
+			tempTransaction.setHashID(Base64.decodeBase64((String) map.get("hashID")));
+			tempTransaction.setSenderHash(Base64.decodeBase64((String) map.get("senderHash")));
+			tempTransaction.setReceiverHash(Base64.decodeBase64((String) map.get("receiverHash")));
+			tempTransaction.setSignature(Base64.decodeBase64((String) map.get("signature")));
+			tempTransaction.setTimestamp((long)map.get("timestamp"));
+			@SuppressWarnings("unchecked")
+			List<Map<String,Object>> mapTxinputs = (List<Map<String,Object>>) map.get("txInputs");
+			for (Map<String, Object> mapInput: mapTxinputs) {
+				TransactionInput txInput = new TransactionInput();
+				txInput.setTransactionOutputId((String) mapInput.get("transactionOutputId"));
+				@SuppressWarnings("unchecked")
+				Map<String,Object> mapTxOutput  = (Map<String, Object>) mapInput.get("UTXO");
+				TransactionOutput txOutput= new TransactionOutput();
+				txOutput.setId((String) mapTxOutput.get("id"));
+				txOutput.setReciepient(Base64.decodeBase64((String) mapTxOutput.get("reciepient")));
+				txOutput.setValue(Float.parseFloat(Double.toString((double)map.get("value"))) );
+				txOutput.setParentTransactionId(Base64.decodeBase64((String) mapTxOutput.get("parentTransactionId")));
+				txInput.setUTXO(txOutput);
+				tempTransaction.getTxInputs().add(txInput);
+			}
+			@SuppressWarnings("unchecked")
+			List<Map<String,Object>> mapTxOutputs = (List<Map<String,Object>>) map.get("txOutputs");
+			for(Map<String,Object> mapOutput : mapTxOutputs) {
+				TransactionOutput tempOutput = new TransactionOutput();
+				tempOutput.setId((String) mapOutput.get("id"));
+				tempOutput.setReciepient(Base64.decodeBase64((String) mapOutput.get("reciepient")));
+				tempOutput.setValue(Float.parseFloat(Double.toString((double)map.get("value"))) );
+				tempOutput.setParentTransactionId(Base64.decodeBase64((String) mapOutput.get("parentTransactionId")));
+				tempTransaction.getTxOutputs().add(tempOutput);
+			}
+			transactions.add(tempTransaction);
+		}
+		return transactions;
 	}
 	public List<Block> getAllBlock(){
 		List<Block> blocks = new ArrayList<>();

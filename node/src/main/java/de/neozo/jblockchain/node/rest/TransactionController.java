@@ -3,7 +3,9 @@ package de.neozo.jblockchain.node.rest;
 
 import de.neozo.jblockchain.common.SignatureUtils;
 import de.neozo.jblockchain.common.domain.Transaction;
+import de.neozo.jblockchain.common.domain.TransactionOutput;
 import de.neozo.jblockchain.node.dto.TransactionDTO;
+import de.neozo.jblockchain.node.service.BlockService;
 import de.neozo.jblockchain.node.service.MiningService;
 import de.neozo.jblockchain.node.service.NodeService;
 import de.neozo.jblockchain.node.service.TransactionService;
@@ -15,6 +17,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 
+import java.nio.file.Files;
+import java.util.List;
 import java.util.Set;
 
 
@@ -27,11 +31,13 @@ public class TransactionController {
     private final TransactionService transactionService;
     private final NodeService nodeService;
     private final MiningService miningService;
+    private final BlockService blockService;
     @Autowired
-    public TransactionController(TransactionService transactionService, NodeService nodeService, MiningService miningService) {
+    public TransactionController(TransactionService transactionService, NodeService nodeService, MiningService miningService,BlockService blockService) {
         this.transactionService = transactionService;
         this.nodeService = nodeService;
         this.miningService = miningService;
+        this.blockService = blockService;
     }
 
     /**
@@ -54,27 +60,33 @@ public class TransactionController {
      */
     @RequestMapping(method = RequestMethod.PUT)
     void addTransaction(@RequestBody TransactionDTO transactionDTO, @RequestParam(required = false) Boolean publish, HttpServletResponse response) {
-    	byte[] signature = SignatureUtils.sign(transactionDTO.getMessage().getBytes(), transactionDTO.getPrivateKey());
-        Transaction transaction = new Transaction(transactionDTO.getMessage(), transactionDTO.getSenderHash(), signature);
-    	LOG.info("Add transaction " +Base64.encodeBase64String(transaction.getHash()));
-        boolean success = transactionService.add(transaction);
-        if (success) {
-            response.setStatus(HttpServletResponse.SC_ACCEPTED);
-            if(transactionService.getTransactionPool().size() >= 2) {
-            	miningService.startMiner();
+    	List<TransactionOutput> UTXOs = blockService.findAllUTXOs();
+    	try {
+    		Transaction transaction = transactionService.createTransaction(transactionDTO, UTXOs);
+    		boolean success = transactionService.add(transaction);
+            if (success) {
+            	
+                response.setStatus(HttpServletResponse.SC_ACCEPTED);
+                if(transactionService.getTransactionPool().size() >= 2) {
+                	miningService.startMiner();
+                }
+                if (publish != null && publish) {
+                    nodeService.broadcastPut("transaction/add", transaction);
+                }
+            } else {
+                response.setStatus(HttpServletResponse.SC_NOT_ACCEPTABLE);
             }
-            if (publish != null && publish) {
-                nodeService.broadcastPut("transaction/add", transaction);
-            }
-        } else {
-            response.setStatus(HttpServletResponse.SC_NOT_ACCEPTABLE);
-        }
+		} catch (Exception e) {
+			//Xu li khong du so tien
+			e.printStackTrace();
+		}
+    	
     }
     ///
     @RequestMapping(value = "add", method = RequestMethod.PUT)
     void addTransaction(@RequestBody Transaction transaction, @RequestParam(required = false) Boolean publish, HttpServletResponse response) {
    
-    	LOG.info("Add transaction " +Base64.encodeBase64String(transaction.getHash()));
+    	LOG.info("Add transaction " +Base64.encodeBase64String(transaction.getHashID()));
         boolean success = transactionService.add(transaction);
         if (success) {
             response.setStatus(HttpServletResponse.SC_ACCEPTED);

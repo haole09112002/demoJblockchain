@@ -12,8 +12,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.PreDestroy;
+
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -58,10 +62,12 @@ public class NodeService implements ApplicationListener<ServletWebServerInitiali
 
         self = getSelfNode(host, port);
         LOG.info("Self address: " + self.getAddress());
-
+        blockService.loadLocalBlockDB();
         // download data if necessary
         if (self.equals(masterNode)) {
-        	blockService.loadLocalBlockDB();
+        	addressService.loadLocalAddress();
+        	if(blockService.getLastBlock() == null) {
+        		blockService.createGenesisBlock();   	}
             LOG.info("Running as master node, nothing to init");
         } else {
             knownNodes.add(masterNode);
@@ -69,7 +75,6 @@ public class NodeService implements ApplicationListener<ServletWebServerInitiali
             // retrieve data
             retrieveKnownNodes(masterNode, restTemplate);
             addressService.retrieveAddresses(masterNode, restTemplate);
-            blockService.loadLocalBlockDB();
             if(blockService.getLastBlock() == null) {
             	 blockService.retrieveBlockchain(masterNode, restTemplate);
             }
@@ -93,8 +98,6 @@ public class NodeService implements ApplicationListener<ServletWebServerInitiali
 				}
             }
             transactionService.retrieveTransactions(masterNode, restTemplate);
-
-            // publish self
             broadcastPut("node", self);
         }
     }

@@ -4,6 +4,8 @@ package de.neozo.jblockchain.node.service;
 import de.neozo.jblockchain.common.SignatureUtils;
 import de.neozo.jblockchain.common.domain.Address;
 import de.neozo.jblockchain.common.domain.Node;
+import de.neozo.jblockchain.common.repository.AddressDB;
+
 import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.KeyPair;
@@ -19,6 +22,7 @@ import java.security.NoSuchProviderException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -48,6 +52,9 @@ public class AddressService {
     public Collection<Address> getAll() {
         return addresses.values();
     }
+    public boolean isEmpty() {
+    	return addresses.isEmpty();
+    }
 
     /**
      * Add a new Address to the map
@@ -55,6 +62,12 @@ public class AddressService {
      */
     public synchronized void add(Address address) {
         addresses.put(Base64.encodeBase64String(address.getHash()), address);
+        try {
+			AddressDB.getInstance().addAddress(address);
+		} catch (MalformedURLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
 
     /**
@@ -67,7 +80,16 @@ public class AddressService {
         Arrays.asList(addresses).forEach(this::add);
         LOG.info("Retrieved " + addresses.length + " addresses from node " + node.getAddress());
     }
-    
+    public void loadLocalAddress() {
+    	try {
+    		List<Address> listAddresses = AddressDB.getInstance().getAllAddresses();
+    		for (Address address : listAddresses) {
+    			addresses.put(Base64.encodeBase64String(address.getHash()), address);
+			}
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		}
+    }
     public KeyPair generateKeyPair() {
     	try {
     	       KeyPair keyPair = SignatureUtils.generateKeyPair();
