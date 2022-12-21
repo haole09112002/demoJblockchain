@@ -1,4 +1,3 @@
-
 package de.neozo.jblockchain.node.service;
 
 
@@ -6,7 +5,9 @@ import de.neozo.jblockchain.common.SignatureUtils;
 import de.neozo.jblockchain.common.domain.Address;
 import de.neozo.jblockchain.common.domain.Node;
 import de.neozo.jblockchain.common.domain.Transaction;
+import de.neozo.jblockchain.common.domain.TransactionOutput;
 import de.neozo.jblockchain.node.Config;
+import de.neozo.jblockchain.node.dto.TransactionDTO;
 
 import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
@@ -15,6 +16,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.util.*;
 
 
@@ -69,17 +79,58 @@ public class TransactionService {
     public boolean containsAll(Collection<Transaction> transactions) {
         return transactionPool.containsAll(transactions);
     }
-
+    public void createCoinBase() throws NoSuchProviderException, NoSuchAlgorithmException, IOException {
+    	Transaction coinbaseTx = new Transaction();
+    		KeyPair keyPair = SignatureUtils.generateKeyPair();
+            Files.write(Paths.get("key.priv"), keyPair.getPrivate().getEncoded());
+            Files.write(Paths.get("key.pub"), keyPair.getPublic().getEncoded());
+            Files.writeString(Paths.get("keypub.txt"),Base64.encodeBase64String(keyPair.getPublic().getEncoded()));
+            Files.writeString(Paths.get("keypriv.txt"),Base64.encodeBase64String(keyPair.getPrivate().getEncoded()));
+            Address address = new Address("Master Address", Files.readAllBytes(Paths.get("key.pub")));
+            LOG.info("First address "+Base64.encodeBase64String(address.getHash()));
+            addressService.add(address);
+    	coinbaseTx.createCoinBase(address.getPublicKey());
+    	this.transactionPool.add(coinbaseTx);
+    }
+    public Transaction createTransaction(TransactionDTO transactionDTO,List<TransactionOutput> UTXOs) throws Exception {
+    	Address sender = addressService.getByHash(transactionDTO.getSenderHash());
+    	Address receiver = addressService.getByHash(transactionDTO.getReceiverHash());
+    	List<TransactionOutput> spentableOutputs = getSpentableOutputs(sender.getPublicKey(), UTXOs, transactionDTO.getValue());
+    	if(spentableOutputs == null) {
+    		throw new Exception("Not enough amount!");
+    	}
+    	Transaction newTx = new Transaction(sender.getPublicKey(),receiver.getPublicKey(),transactionDTO.getValue());
+    	byte[] signature = SignatureUtils.sign(newTx.DataString().getBytes(),transactionDTO.getPrivateKey());
+    	newTx.setSignature(signature);
+    	newTx.setHashID(newTx.calculateHash());
+    	newTx.processTransaction(spentableOutputs);
+    	return newTx;
+    }
+    public List<TransactionOutput> getSpentableOutputs(byte[] senderHash,List<TransactionOutput> UTXOs,float value){
+    	float accumulated = 0f;
+    	List<TransactionOutput> unpentOutputs = new ArrayList<>();
+    	for (TransactionOutput transactionOutput : UTXOs) {
+    		if(accumulated >= value) {
+    			break;
+    		}
+			if(!Arrays.equals(senderHash,transactionOutput.reciepient)) {
+				continue;
+			}
+			accumulated += transactionOutput.getValue();
+			unpentOutputs.add(transactionOutput);
+			LOG.info(transactionOutput.getId());
+			LOG.info(Base64.encodeBase64String(transactionOutput.getReciepient()));
+			LOG.info(Float.toString(accumulated));
+			
+		}
+    	if(accumulated < value) {
+    		return null;
+    	}
+    	return unpentOutputs;
+    }
     private boolean verify(Transaction transaction) {
-        // correct signature
-        Address sender = addressService.getByHash(transaction.getSenderHash());
-        if (sender == null) {
-            LOG.warn("Unknown address " + transaction.getSenderHash());
-            return false;
-        }
-
         try {
-            if (!SignatureUtils.verify(transaction.getText().getBytes(), transaction.getSignature(), sender.getPublicKey())) {
+            if (!SignatureUtils.verify(transaction.DataString().getBytes(), transaction.getSignature(), transaction.getSenderHash())) {
                 LOG.warn("Invalid signature");
                 return false;
             }
@@ -89,7 +140,7 @@ public class TransactionService {
         }
 
         // correct hash
-        if (!Arrays.equals(transaction.getHash(), transaction.calculateHash())) {
+        if (!Arrays.equals(transaction.getHashID(),transaction.calculateHash())) {
             LOG.warn("Invalid hash");
             return false;
         }
