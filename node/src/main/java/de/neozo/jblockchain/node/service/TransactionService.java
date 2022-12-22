@@ -7,6 +7,7 @@ import de.neozo.jblockchain.common.domain.Node;
 import de.neozo.jblockchain.common.domain.Transaction;
 import de.neozo.jblockchain.common.domain.TransactionOutput;
 import de.neozo.jblockchain.node.Config;
+import de.neozo.jblockchain.node.dto.PeerDTO;
 import de.neozo.jblockchain.node.dto.TransactionDTO;
 
 import org.apache.commons.codec.binary.Base64;
@@ -22,9 +23,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.SignatureException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.*;
 
 
