@@ -93,7 +93,7 @@ public class JavaCouchDB {
 				TransactionOutput txOutput= new TransactionOutput();
 				txOutput.setId((String) mapTxOutput.get("id"));
 				txOutput.setReciepient(Base64.decodeBase64((String) mapTxOutput.get("reciepient")));
-				txOutput.setValue(Float.parseFloat(Double.toString((double)map.get("value"))) );
+				txOutput.setValue(Float.parseFloat(Double.toString((double)mapTxOutput.get("value"))) );
 				txOutput.setParentTransactionId(Base64.decodeBase64((String) mapTxOutput.get("parentTransactionId")));
 				txInput.setUTXO(txOutput);
 				tempTransaction.getTxInputs().add(txInput);
@@ -104,7 +104,7 @@ public class JavaCouchDB {
 				TransactionOutput tempOutput = new TransactionOutput();
 				tempOutput.setId((String) mapOutput.get("id"));
 				tempOutput.setReciepient(Base64.decodeBase64((String) mapOutput.get("reciepient")));
-				tempOutput.setValue(Float.parseFloat(Double.toString((double)map.get("value"))) );
+				tempOutput.setValue(Float.parseFloat(Double.toString((double)mapOutput.get("value"))) );
 				tempOutput.setParentTransactionId(Base64.decodeBase64((String) mapOutput.get("parentTransactionId")));
 				tempTransaction.getTxOutputs().add(tempOutput);
 			}

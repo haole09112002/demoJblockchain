@@ -111,20 +111,18 @@ public class TransactionService {
     	return newTx;
     }
     public List<TransactionOutput> getSpentableOutputs(byte[] senderHash,List<TransactionOutput> UTXOs,float value){
+    	LOG.info("size="+UTXOs.size());
     	float accumulated = 0f;
     	List<TransactionOutput> unpentOutputs = new ArrayList<>();
     	for (TransactionOutput transactionOutput : UTXOs) {
     		if(accumulated >= value) {
     			break;
     		}
-			if(!Arrays.equals(senderHash,transactionOutput.reciepient)) {
+			if(!Arrays.equals(senderHash,transactionOutput.getReciepient())) {
 				continue;
 			}
 			accumulated += transactionOutput.getValue();
 			unpentOutputs.add(transactionOutput);
-			LOG.info(transactionOutput.getId());
-			LOG.info(Base64.encodeBase64String(transactionOutput.getReciepient()));
-			LOG.info(Float.toString(accumulated));
 			
 		}
     	if(accumulated < value) {
