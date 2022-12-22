@@ -5,6 +5,7 @@ import de.neozo.jblockchain.common.SignatureUtils;
 import de.neozo.jblockchain.common.domain.Address;
 import de.neozo.jblockchain.common.domain.Node;
 import de.neozo.jblockchain.common.repository.AddressDB;
+import de.neozo.jblockchain.node.dto.PeerDTO;
 
 import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
@@ -101,6 +102,29 @@ public class AddressService {
 		}
     	return null;
  
+    }
+    public boolean verifyAccount(PeerDTO peerDTO) throws Exception 
+    {
+    	byte[] signature = SignatureUtils.sign(peerDTO.getMessage().getBytes(),peerDTO.getPrivateKey());
+    		Address address = getByHash(peerDTO.getSenderHash());
+    		if(address!= null)
+    		{
+    			Boolean check = SignatureUtils.verify(peerDTO.getMessage().getBytes(), signature, address.getPublicKey());
+    			if(check)
+    			{
+    				LOG.info("Verify account senderHash: " + peerDTO.getSenderHash());
+    				return true;
+    			}
+    			else
+    			{
+    				LOG.info("Sai PV: " + peerDTO.getSenderHash());
+    				return false;
+    			}
+    		}
+    		else 
+    		{
+    			throw new Exception("Sai Senderhash");
+    		}
     }
     
     

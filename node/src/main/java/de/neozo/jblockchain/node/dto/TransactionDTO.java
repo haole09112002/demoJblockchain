@@ -3,10 +3,7 @@ package de.neozo.jblockchain.node.dto;
 public class TransactionDTO {
 
     private float value;
-
-
     private byte[] senderHash;
-
     private byte[] receiverHash;
     private byte[] privateKey;
 

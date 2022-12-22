@@ -21,7 +21,7 @@ public class BlockchainNode {
 			@Override
 			public void addCorsMappings(CorsRegistry registry) {
 				// TODO Auto-generated method stub
-				registry.addMapping("/**").allowedOrigins("http://127.0.0.1:5500")
+				registry.addMapping("/**").allowedOrigins("http://127.0.0.1:5500","http://127.0.0.1:5501", "http://127.0.0.1:5503")
 				.allowedMethods("GET", "POST", "PUT", "DELETE");
 			}
 		};
