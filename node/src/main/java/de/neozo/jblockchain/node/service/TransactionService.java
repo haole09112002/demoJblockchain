@@ -6,8 +6,6 @@ import de.neozo.jblockchain.common.domain.Address;
 import de.neozo.jblockchain.common.domain.Node;
 import de.neozo.jblockchain.common.domain.Transaction;
 import de.neozo.jblockchain.common.domain.TransactionOutput;
-import de.neozo.jblockchain.node.Config;
-import de.neozo.jblockchain.node.dto.PeerDTO;
 import de.neozo.jblockchain.node.dto.TransactionDTO;
 
 import org.apache.commons.codec.binary.Base64;
@@ -111,7 +109,6 @@ public class TransactionService {
     	return newTx;
     }
     public List<TransactionOutput> getSpentableOutputs(byte[] senderHash,List<TransactionOutput> UTXOs,float value){
-    	LOG.info("size="+UTXOs.size());
     	float accumulated = 0f;
     	List<TransactionOutput> unpentOutputs = new ArrayList<>();
     	for (TransactionOutput transactionOutput : UTXOs) {

@@ -8,12 +8,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.neozo.jblockchain.common.SignatureUtils;
-import de.neozo.jblockchain.common.domain.Transaction;
 import de.neozo.jblockchain.node.dto.PeerDTO;
-import de.neozo.jblockchain.node.dto.TransactionDTO;
 import de.neozo.jblockchain.node.service.AddressService;
-import de.neozo.jblockchain.node.service.TransactionService;
 
 
 

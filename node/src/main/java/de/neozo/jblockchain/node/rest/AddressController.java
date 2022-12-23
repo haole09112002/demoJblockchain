@@ -41,32 +41,6 @@ public class AddressController {
     Collection<Address> getAdresses() {
         return addressService.getAll();
     }
-
-
-    /**
-     * Add a new Address
-     * @param address the Address to add
-     * @param publish if true, this Node is going to inform all other Nodes about the new Address
-     * @param response Status Code 202 if Address was added, 406 if submitted hash is already present
-     */
-//    @PostMapping(value = "/add",consumes = "application/x-www-form-urlencoded")
-//    void addAddress( Peer peer, @RequestParam(required = false) Boolean publish, HttpServletResponse response) {
-//    	Address address = new Address(peer.getName(),peer.getPublicKey());
-//        LOG.info("Add address " + address.getHash());
-//        if (addressService.getByHash(address.getHash()) == null) {
-//            addressService.add(address);
-//
-//            if (publish != null && publish) {
-//                nodeService.broadcastPut("address", address);
-//            }
-//            response.setStatus(HttpServletResponse.SC_ACCEPTED);
-//        } else {
-//            response.setStatus(HttpServletResponse.SC_NOT_ACCEPTABLE);
-//        }
-//    }
-    
-    
-    
     @PutMapping(consumes = "application/json")
     AddressDTO  addAddress(@RequestBody String name, @RequestParam(required = false) Boolean publish, HttpServletResponse response) {
     	KeyPair keyPair = addressService.generateKeyPair();
