@@ -9,7 +9,6 @@ import de.neozo.jblockchain.common.domain.TransactionOutput;
 import de.neozo.jblockchain.node.Config;
 import de.neozo.jblockchain.common.repository.*;
 
-import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +22,6 @@ import java.security.NoSuchProviderException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -180,6 +178,16 @@ public class BlockService {
 		}
 		return spentTXOs;
 	}
+    public float getBalance(byte[] publickey) {
+    	float balance = 0f;
+    	List<TransactionOutput> UTXOs = findAllUTXOs();
+    	for (TransactionOutput txOutput : UTXOs) {
+			if(Arrays.equals(txOutput.getReciepient(),publickey)) {
+				balance += txOutput.getValue();
+			}
+		}
+    	return balance;
+    }
     private boolean verify(Block block,int typeBlock) {
         // references last block in chain
         if (blockchain.size() > 0) {

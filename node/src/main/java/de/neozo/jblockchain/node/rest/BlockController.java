@@ -1,8 +1,10 @@
 package de.neozo.jblockchain.node.rest;
 
 
+import de.neozo.jblockchain.common.domain.Address;
 import de.neozo.jblockchain.common.domain.Block;
 import de.neozo.jblockchain.node.Config;
+import de.neozo.jblockchain.node.service.AddressService;
 import de.neozo.jblockchain.node.service.BlockService;
 import de.neozo.jblockchain.node.service.MiningService;
 import de.neozo.jblockchain.node.service.NodeService;
@@ -28,12 +30,14 @@ public class BlockController {
     private final BlockService blockService;
     private final NodeService nodeService;
     private final MiningService miningService;
+    private final AddressService addressService;
 
     @Autowired
-    public BlockController(BlockService blockService, NodeService nodeService, MiningService miningService) {
+    public BlockController(BlockService blockService, NodeService nodeService, MiningService miningService,AddressService addressService) {
         this.blockService = blockService;
         this.nodeService = nodeService;
         this.miningService = miningService;
+        this.addressService = addressService;
     }
 
     /**
@@ -45,23 +49,12 @@ public class BlockController {
     	
         return blockService.getBlockchain();
     }
-
-    /**
-     * Add a new Block at the end of the Blockchain.
-     * It is expected that the Block is valid, see BlockService.verify(Block) for details.
-     *
-     * @param block the Block to add
-     * @param publish if true, this Node is going to inform all other Nodes about the new Block
-     * @param response Status Code 202 if Block accepted, 406 if verification fails
-     * @throws MalformedURLException 
-     */
     @RequestMapping(method = RequestMethod.PUT)
     void addNewBlock(@RequestBody Block block, @RequestParam(required = false) Boolean publish, HttpServletResponse response) throws MalformedURLException {
         boolean success = blockService.append(block,Config.NEW_BLOCK);
         if (success) {
         	 LOG.info("Add  newBlock " + Base64.encodeBase64String(block.getHash()));
             response.setStatus(HttpServletResponse.SC_ACCEPTED);
-//            LOG.info("Starting stop miner");
             miningService.stopMiner();
             LOG.info("Stopped miner");
             if (publish != null && publish) {
@@ -84,15 +77,18 @@ public class BlockController {
     	}
     }
     @RequestMapping(value = "/version",method = RequestMethod.GET)
-    @ResponseBody
     int getVersionBlock() {
     	if(blockService.getLastBlock() != null) {
     		return blockService.getLastBlock().getIndex();
     	}
     	return 0;
     }
+    @RequestMapping(method = RequestMethod.POST)
+    public float getBlance(@RequestBody String senderHash,HttpServletResponse response) {
+    	Address address = addressService.getByHash(Base64.decodeBase64(senderHash));
+    	return blockService.getBalance(address.getPublicKey());
+    }
     @RequestMapping(value = "/getblocks", params = {"index"},method =  RequestMethod.GET)
-    @ResponseBody
     public List<Block> getMissingBlocks(@RequestParam("index") int index){
     	List<Block> missingBlocks = new ArrayList<>();
     	for(int i = index - 1 ; i < blockService.getBlockchain().size(); i++ ) {
@@ -100,10 +96,7 @@ public class BlockController {
     	}
     	return missingBlocks;
     }
-
-    /**
-     * Stop mining of Blocks on this Node
-     */
+    
     @RequestMapping(path = "stop-miner")
     public void stopMiner() {
         miningService.stopMiner();

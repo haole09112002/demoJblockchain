@@ -1,7 +1,6 @@
 package de.neozo.jblockchain.node.rest;
 
 
-import de.neozo.jblockchain.common.SignatureUtils;
 import de.neozo.jblockchain.common.domain.Transaction;
 import de.neozo.jblockchain.common.domain.TransactionOutput;
 import de.neozo.jblockchain.node.dto.TransactionDTO;

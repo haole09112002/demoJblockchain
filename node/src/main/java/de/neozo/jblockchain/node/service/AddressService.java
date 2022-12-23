@@ -106,18 +106,20 @@ public class AddressService {
     public boolean verifyAccount(PeerDTO peerDTO) throws Exception 
     {
     	byte[] signature = SignatureUtils.sign(peerDTO.getMessage().getBytes(),peerDTO.getPrivateKey());
+    	LOG.info(Base64.encodeBase64String(peerDTO.getPrivateKey()));
     		Address address = getByHash(peerDTO.getSenderHash());
+    		LOG.info(address.getName());
     		if(address!= null)
     		{
     			Boolean check = SignatureUtils.verify(peerDTO.getMessage().getBytes(), signature, address.getPublicKey());
     			if(check)
     			{
-    				LOG.info("Verify account senderHash: " + peerDTO.getSenderHash());
+    				LOG.info("Verify account senderHash: " + Base64.encodeBase64String(peerDTO.getSenderHash()));
     				return true;
     			}
     			else
     			{
-    				LOG.info("Sai PV: " + peerDTO.getSenderHash());
+    				LOG.info("Sai PV: " + Base64.encodeBase64String(peerDTO.getSenderHash()));
     				return false;
     			}
     		}
