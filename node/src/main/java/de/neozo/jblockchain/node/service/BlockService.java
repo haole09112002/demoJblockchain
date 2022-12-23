@@ -22,6 +22,7 @@ import java.security.NoSuchProviderException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,6 +41,17 @@ public class BlockService {
     }
 
     public List<Block> getBlockchain() {
+    	List<Block> blockchain = this.blockchain;
+    	Collections.sort(blockchain, new Comparator<Block>() {
+            @Override
+            public int compare(Block o1, Block o2) {
+            	if(o1.getIndex() < o2.getIndex())
+            		return 1;
+            	else {
+					return -1;
+				}
+            }
+        });
         return blockchain;
     }
 

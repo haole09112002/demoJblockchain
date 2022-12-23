@@ -83,10 +83,18 @@ public class BlockController {
     	}
     	return 0;
     }
-    @RequestMapping(method = RequestMethod.POST)
+    @RequestMapping(method = RequestMethod.POST, value = "balance")
     public float getBlance(@RequestBody String senderHash,HttpServletResponse response) {
+    	
     	Address address = addressService.getByHash(Base64.decodeBase64(senderHash));
-    	return blockService.getBalance(address.getPublicKey());
+    	
+//    	Address address = addressService.getByHash(senderHash);
+    	if(address != null)
+    	{
+    		LOG.info("Balance: " +blockService.getBalance(address.getPublicKey()) );
+    		return blockService.getBalance(address.getPublicKey());
+    	}
+    	return -1;
     }
     @RequestMapping(value = "/getblocks", params = {"index"},method =  RequestMethod.GET)
     public List<Block> getMissingBlocks(@RequestParam("index") int index){
