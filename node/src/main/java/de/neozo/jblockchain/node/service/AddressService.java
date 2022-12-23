@@ -91,6 +91,15 @@ public class AddressService {
 			e.printStackTrace();
 		}
     }
+    public byte[] getHashByPublickey(byte[] publickey) {
+    	for (Map.Entry m : addresses.entrySet()) {
+			Address address = (Address) m.getValue();
+			if(Arrays.equals(address.getPublicKey(),publickey)) {
+				return address.getHash();
+			}
+		}
+    	return null;
+    }
     public KeyPair generateKeyPair() {
     	try {
     	       KeyPair keyPair = SignatureUtils.generateKeyPair();
@@ -106,7 +115,6 @@ public class AddressService {
     public boolean verifyAccount(PeerDTO peerDTO) throws Exception 
     {
     	byte[] signature = SignatureUtils.sign(peerDTO.getMessage().getBytes(),peerDTO.getPrivateKey());
-    	LOG.info(Base64.encodeBase64String(peerDTO.getPrivateKey()));
     		Address address = getByHash(peerDTO.getSenderHash());
     		LOG.info(address.getName());
     		if(address!= null)

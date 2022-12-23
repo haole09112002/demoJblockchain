@@ -7,6 +7,7 @@ import de.neozo.jblockchain.common.domain.Node;
 import de.neozo.jblockchain.common.domain.Transaction;
 import de.neozo.jblockchain.common.domain.TransactionOutput;
 import de.neozo.jblockchain.node.dto.TransactionDTO;
+import de.neozo.jblockchain.node.dto.TxHistoryDTO;
 
 import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
@@ -14,19 +15,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
-import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.security.SignatureException;
-import java.security.spec.InvalidKeySpecException;
 import java.util.*;
 
 
@@ -94,12 +88,15 @@ public class TransactionService {
     	coinbaseTx.createCoinBase(address.getPublicKey());
     	this.transactionPool.add(coinbaseTx);
     }
-    public Transaction createTransaction(TransactionDTO transactionDTO,List<TransactionOutput> UTXOs) throws Exception {
+    public Transaction createTransaction(TransactionDTO transactionDTO,List<TransactionOutput> UTXOs) throws NullPointerException,Error {
     	Address sender = addressService.getByHash(transactionDTO.getSenderHash());
     	Address receiver = addressService.getByHash(transactionDTO.getReceiverHash());
+    	if(receiver == null) {
+    		throw new Error("Invalid receiver");
+    	}
     	List<TransactionOutput> spentableOutputs = getSpentableOutputs(sender.getPublicKey(), UTXOs, transactionDTO.getValue());
     	if(spentableOutputs == null) {
-    		throw new Exception("Not enough amount!");
+    		throw new NullPointerException("Not enough amount!");
     	}
     	Transaction newTx = new Transaction(sender.getPublicKey(),receiver.getPublicKey(),transactionDTO.getValue());
     	byte[] signature = SignatureUtils.sign(newTx.DataString().getBytes(),transactionDTO.getPrivateKey());
@@ -126,6 +123,23 @@ public class TransactionService {
     		return null;
     	}
     	return unpentOutputs;
+    }
+    public Set<TxHistoryDTO> convertTransactions(Set<Transaction> transactions){
+    	Set<TxHistoryDTO> txHistoryDTOs = new HashSet<>();
+    	for (Transaction transaction : transactions) {
+			byte[] sender = addressService.getHashByPublickey(transaction.getSenderHash());
+			byte[] receiver = addressService.getHashByPublickey(transaction.getReceiverHash());
+			TxHistoryDTO txHistoryDTO = new TxHistoryDTO();
+			txHistoryDTO.setHashID(transaction.getHashID());
+			txHistoryDTO.setSenderHash(sender);
+			txHistoryDTO.setReceiverHash(receiver);
+			LOG.info(Float.toString(transaction.getValue()));
+			txHistoryDTO.setValue(transaction.getValue());
+			Date date = new Date(transaction.getTimestamp());
+			txHistoryDTO.setTimeStamp(date.toString());
+			txHistoryDTOs.add(txHistoryDTO);
+		}
+    	return txHistoryDTOs;
     }
     private boolean verify(Transaction transaction) {
         try {

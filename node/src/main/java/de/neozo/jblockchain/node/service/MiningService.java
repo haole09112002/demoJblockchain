@@ -78,7 +78,6 @@ public class MiningService implements Runnable {
 				}
             }
         }
-        LOG.info("Miner stopped");
     }
 
     private Block mineBlock() {
@@ -105,10 +104,12 @@ public class MiningService implements Runnable {
         while (runMiner.get()) {
             Block block = new Block(previousBlockIndex,previousBlockHash, transactions, tries);
             if (block.getLeadingZerosCount() >= Config.DIFFICULTY) {
+            	stopMiner();
                 return block;
             }
             tries++;
         }
+        LOG.info("Stop miner in mineBlock()");
         return null;
     }
 

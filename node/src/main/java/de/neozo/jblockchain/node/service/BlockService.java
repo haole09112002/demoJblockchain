@@ -7,6 +7,7 @@ import de.neozo.jblockchain.common.domain.Transaction;
 import de.neozo.jblockchain.common.domain.TransactionInput;
 import de.neozo.jblockchain.common.domain.TransactionOutput;
 import de.neozo.jblockchain.node.Config;
+import de.neozo.jblockchain.node.dto.TxHistoryDTO;
 import de.neozo.jblockchain.common.repository.*;
 
 import org.slf4j.Logger;
@@ -22,7 +23,9 @@ import java.security.NoSuchProviderException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 
@@ -76,6 +79,7 @@ public class BlockService {
      * @param node Node to query
      * @param restTemplate RestTemplate to use
      */
+    
     public void retrieveBlockchain(Node node, RestTemplate restTemplate) {
         Block[] blocks = restTemplate.getForObject(node.getAddress() + "/block", Block[].class);
         Collections.addAll(blockchain, blocks);
@@ -187,6 +191,17 @@ public class BlockService {
 			}
 		}
     	return balance;
+    }
+    public Set<TxHistoryDTO> getTransationsByHash(byte[] publickey){
+    	Set<Transaction> transactionHistory = new HashSet<>();
+    	for(int i=blockchain.size() -1 ; i >= 0 ;i--) {
+    		for (Transaction transaction : blockchain.get(i).getTransactions()) {
+				if(Arrays.equals(publickey,transaction.getSenderHash()) || Arrays.equals(publickey,transaction.getReceiverHash())) {
+					transactionHistory.add(transaction);
+				}
+			}
+    	}
+    	return transactionService.convertTransactions(transactionHistory);
     }
     private boolean verify(Block block,int typeBlock) {
         // references last block in chain
