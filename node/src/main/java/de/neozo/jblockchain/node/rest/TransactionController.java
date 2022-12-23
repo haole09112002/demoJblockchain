@@ -4,6 +4,7 @@ package de.neozo.jblockchain.node.rest;
 import de.neozo.jblockchain.common.domain.Transaction;
 import de.neozo.jblockchain.common.domain.TransactionOutput;
 import de.neozo.jblockchain.node.dto.TransactionDTO;
+import de.neozo.jblockchain.node.dto.TxHistoryDTO;
 import de.neozo.jblockchain.node.service.BlockService;
 import de.neozo.jblockchain.node.service.MiningService;
 import de.neozo.jblockchain.node.service.NodeService;
@@ -45,24 +46,18 @@ public class TransactionController {
     Set<Transaction> getTransactionPool() {
         return transactionService.getTransactionPool();
     }
-
-
-    /**
-     * Add a new Transaction to the pool.
-     * It is expected that the transaction has a valid signature and the correct hash.
-     *
-     * @param transaction the Transaction to add
-     * @param publish if true, this Node is going to inform all other Nodes about the new Transaction
-     * @param response Status Code 202 if Transaction accepted, 406 if verification fails
-     */
+    @RequestMapping (value="viewpool",method = RequestMethod.GET)
+    Set<TxHistoryDTO> geTxHistoryDTOs(){
+    	return transactionService.convertTransactions(transactionService.getTransactionPool());
+    }
     @RequestMapping(method = RequestMethod.PUT)
-    void addTransaction(@RequestBody TransactionDTO transactionDTO, @RequestParam(required = false) Boolean publish, HttpServletResponse response) {
+    void addTransaction(@RequestBody TransactionDTO transactionDTO, @RequestParam(required = false) Boolean publish, HttpServletResponse response)  {
     	List<TransactionOutput> UTXOs = blockService.findAllUTXOs();
     	try {
     		Transaction transaction = transactionService.createTransaction(transactionDTO, UTXOs);
     		boolean success = transactionService.add(transaction);
             if (success) {
-            	
+            	LOG.info("Add transaction " +Base64.encodeBase64String(transaction.getHashID()));
                 response.setStatus(HttpServletResponse.SC_ACCEPTED);
                 if(transactionService.getTransactionPool().size() >= 2) {
                 	miningService.startMiner();
@@ -73,13 +68,14 @@ public class TransactionController {
             } else {
                 response.setStatus(HttpServletResponse.SC_NOT_ACCEPTABLE);
             }
-		} catch (Exception e) {
-			//Xu li khong du so tien
-			e.printStackTrace();
+		} catch (NullPointerException e) {
+			LOG.info("Khong du so tien");
+		}
+    	catch (Error e) {
+			
 		}
     	
     }
-    ///
     @RequestMapping(value = "add", method = RequestMethod.PUT)
     void addTransaction(@RequestBody Transaction transaction, @RequestParam(required = false) Boolean publish, HttpServletResponse response) {
    

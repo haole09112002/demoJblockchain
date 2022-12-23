@@ -81,6 +81,7 @@ public class JavaCouchDB {
 			tempTransaction.setHashID(Base64.decodeBase64((String) map.get("hashID")));
 			tempTransaction.setSenderHash(Base64.decodeBase64((String) map.get("senderHash")));
 			tempTransaction.setReceiverHash(Base64.decodeBase64((String) map.get("receiverHash")));
+			tempTransaction.setValue(Float.parseFloat(Double.toString((double)map.get("value"))));
 			tempTransaction.setSignature(Base64.decodeBase64((String) map.get("signature")));
 			tempTransaction.setTimestamp((long)map.get("timestamp"));
 			@SuppressWarnings("unchecked")
