@@ -3,7 +3,9 @@ package de.neozo.jblockchain.node.rest;
 
 import de.neozo.jblockchain.common.domain.Address;
 import de.neozo.jblockchain.common.domain.Block;
+import de.neozo.jblockchain.common.domain.Transaction;
 import de.neozo.jblockchain.node.Config;
+import de.neozo.jblockchain.node.dto.TxHistoryDTO;
 import de.neozo.jblockchain.node.service.AddressService;
 import de.neozo.jblockchain.node.service.BlockService;
 import de.neozo.jblockchain.node.service.MiningService;
@@ -19,6 +21,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 
 @RestController
@@ -56,7 +59,6 @@ public class BlockController {
         	 LOG.info("Add  newBlock " + Base64.encodeBase64String(block.getHash()));
             response.setStatus(HttpServletResponse.SC_ACCEPTED);
             miningService.stopMiner();
-            LOG.info("Stopped miner");
             if (publish != null && publish) {
                 nodeService.broadcastPut("block", block);
             }
@@ -83,10 +85,15 @@ public class BlockController {
     	}
     	return 0;
     }
-    @RequestMapping(method = RequestMethod.POST)
+    @RequestMapping(value="balance",method = RequestMethod.POST)
     public float getBlance(@RequestBody String senderHash,HttpServletResponse response) {
     	Address address = addressService.getByHash(Base64.decodeBase64(senderHash));
     	return blockService.getBalance(address.getPublicKey());
+    }
+    @RequestMapping(value="history",method = RequestMethod.POST)
+    public Set<TxHistoryDTO> getHistory(@RequestBody String senderHash,HttpServletResponse response){
+    	Address address = addressService.getByHash(Base64.decodeBase64(senderHash));
+    	return blockService.getTransationsByHash(address.getPublicKey());
     }
     @RequestMapping(value = "/getblocks", params = {"index"},method =  RequestMethod.GET)
     public List<Block> getMissingBlocks(@RequestParam("index") int index){
