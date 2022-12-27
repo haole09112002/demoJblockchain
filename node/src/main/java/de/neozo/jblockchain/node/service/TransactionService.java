@@ -133,7 +133,6 @@ public class TransactionService {
 			txHistoryDTO.setHashID(transaction.getHashID());
 			txHistoryDTO.setSenderHash(sender);
 			txHistoryDTO.setReceiverHash(receiver);
-			LOG.info(Float.toString(transaction.getValue()));
 			txHistoryDTO.setValue(transaction.getValue());
 			Date date = new Date(transaction.getTimestamp());
 			txHistoryDTO.setTimeStamp(date.toString());

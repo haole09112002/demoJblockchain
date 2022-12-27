@@ -34,7 +34,7 @@ public class AddressDB {
 	}
 	private void initConnect() throws MalformedURLException {
 		 HttpClient httpClient = new StdHttpClient.Builder()  
-				.url("http://localhost:5984").username("hao").password("123456").build();
+				.url("http://localhost:5984").username("Admin").password("13122002a").build();
 		 CouchDbInstance dbInstance = new StdCouchDbInstance(httpClient); 
 		 db = dbInstance.createConnector("Address",true);
 	}
